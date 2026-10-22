@@ -92,7 +92,7 @@ body {
 		</style>
 		<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
 <link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
-<style>html,body{margin:0;background:#2f6a38;}</style>
+<style>html,body{margin:0;background:#2f6a38;}</style><script>function skyseedFocus(){var c=document.getElementById('canvas');if(c){if(c.tabIndex<0){c.tabIndex=0;}c.focus();}}window.addEventListener('load',skyseedFocus);document.addEventListener('pointerdown',skyseedFocus,true);function skyseedKey(type,ev){var c=document.getElementById('canvas');if(!c||ev.target===c){return;}skyseedFocus();c.dispatchEvent(new KeyboardEvent(type,{key:ev.key,code:ev.code,repeat:ev.repeat,bubbles:true,cancelable:true}));}window.addEventListener('keydown',function(ev){skyseedKey('keydown',ev);},false);window.addEventListener('keyup',function(ev){skyseedKey('keyup',ev);},false);</script>
 	</head>
 	<body>
 		<canvas id="canvas">
@@ -119,23 +119,15 @@ body {
 		else if (input instanceof URL) raw = input.href;
 		else if (input && input.url) raw = input.url;
 		if (!raw) return "";
-		try {
-			raw = new URL(raw, document.baseURI).pathname;
-		} catch (err) {
-			return "";
-		}
+		try { raw = new URL(raw, document.baseURI).pathname; } catch (err) { return ""; }
 		return raw.slice(raw.lastIndexOf("/") + 1);
 	}
 	window.fetch = function (input, init) {
-		if (fileName(input) !== "index.wasm") {
-			return orig(input, init);
-		}
+		if (fileName(input) !== "index.wasm") return orig(input, init);
 		var part1 = new URL("index.wasm.part1", document.baseURI);
 		var part2 = new URL("index.wasm.part2", document.baseURI);
 		return Promise.all([orig(part1, init), orig(part2, init)]).then(function (parts) {
-			if (!parts[0].ok || !parts[1].ok) {
-				throw new Error("Failed loading file 'index.wasm'");
-			}
+			if (!parts[0].ok || !parts[1].ok) throw new Error("Failed loading file 'index.wasm'");
 			var len1 = Number(parts[0].headers.get("Content-Length")) || 0;
 			var len2 = Number(parts[1].headers.get("Content-Length")) || 0;
 			var total = len1 + len2;
@@ -144,49 +136,28 @@ body {
 					var merged = new Uint8Array(bufs[0].byteLength + bufs[1].byteLength);
 					merged.set(new Uint8Array(bufs[0]), 0);
 					merged.set(new Uint8Array(bufs[1]), bufs[0].byteLength);
-					return new Response(merged, {
-						status: 200,
-						statusText: "OK",
-						headers: {
-							"Content-Type": "application/wasm",
-							"Content-Length": String(merged.byteLength),
-						},
-					});
+					return new Response(merged, {status:200, headers:{"Content-Type":"application/wasm","Content-Length":String(merged.byteLength)}});
 				});
 			}
 			var stream = new ReadableStream({
 				async start(controller) {
 					async function pump(response) {
 						var reader = response.body.getReader();
-						for (;;) {
-							var step = await reader.read();
-							if (step.done) return;
-							controller.enqueue(step.value);
-						}
+						for (;;) { var step = await reader.read(); if (step.done) return; controller.enqueue(step.value); }
 					}
-					try {
-						await pump(parts[0]);
-						await pump(parts[1]);
-						controller.close();
-					} catch (err) {
-						controller.error(err);
-					}
-				},
+					try { await pump(parts[0]); await pump(parts[1]); controller.close(); }
+					catch (err) { controller.error(err); }
+				}
 			});
-			return new Response(stream, {
-				status: 200,
-				statusText: "OK",
-				headers: {
-					"Content-Type": "application/wasm",
-					"Content-Length": String(total),
-				},
-			});
+			return new Response(stream, {status:200, headers:{"Content-Type":"application/wasm","Content-Length":String(total)}});
 		});
 	};
 })();
-		</script>
-		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":5219520,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+</script>
+<script>
+</script>
+<script>
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":6745784,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 

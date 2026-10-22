@@ -2,7 +2,7 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
+		<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 		<title>Skyseed</title>
 		<style>
 html, body, #canvas {
@@ -16,6 +16,8 @@ body {
 	background-color: black;
 	overflow: hidden;
 	touch-action: none;
+	-webkit-user-select: none;
+	user-select: none;
 }
 
 #canvas {
@@ -91,10 +93,85 @@ body {
 }
 		</style>
 		<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
-<link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
+
 <style>html,body{margin:0;background:#2f6a38;}</style><script>function skyseedFocus(){var c=document.getElementById('canvas');if(c){if(c.tabIndex<0){c.tabIndex=0;}c.focus();}}window.addEventListener('load',skyseedFocus);document.addEventListener('pointerdown',skyseedFocus,true);function skyseedKey(type,ev){var c=document.getElementById('canvas');if(!c||ev.target===c){return;}skyseedFocus();c.dispatchEvent(new KeyboardEvent(type,{key:ev.key,code:ev.code,repeat:ev.repeat,bubbles:true,cancelable:true}));}window.addEventListener('keydown',function(ev){skyseedKey('keydown',ev);},false);window.addEventListener('keyup',function(ev){skyseedKey('keyup',ev);},false);</script>
+	<script>
+document.addEventListener('touchmove', function (ev) { ev.preventDefault(); }, {passive:false});
+document.addEventListener('gesturestart', function (ev) { ev.preventDefault(); }, {passive:false});
+</script>
+	<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+		<link rel="manifest" href="manifest.json">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+		<meta name="apple-mobile-web-app-title" content="Skyseed">
+		<style>
+#rotate{display:none;position:fixed;inset:0;z-index:80;background:#142033;color:#f0d090;align-items:center;justify-content:center;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+@media (orientation:portrait){#rotate{display:flex}}
+html.portrait #rotate{display:flex}
+.rotate-card{width:min(280px,86vw);background:#1b2a44;border:4px solid #c4a574;box-shadow:0 0 0 4px #0c121c;text-align:center;padding:28px 20px 22px;font:22px/1.3 Georgia,Palatino,serif}
+.rotate-icon{width:72px;height:72px;display:block;margin:0 auto 12px}
+#home-tip{position:fixed;z-index:40;left:50%;top:calc(8px + env(safe-area-inset-top));transform:translateX(-50%);max-width:min(460px,92vw);margin:0;background:#1b2a44;color:#fff6d8;border:3px solid #c4a574;padding:6px 12px;font:13px/1.35 Georgia,Palatino,serif;text-align:center}
+#home-tip[hidden]{display:none}
+html.portrait #home-tip{display:none !important}
+#skyseed-safe{position:fixed;left:var(--sky-left,env(safe-area-inset-left));top:var(--sky-top,env(safe-area-inset-top));right:var(--sky-right,env(safe-area-inset-right));bottom:var(--sky-bottom,env(safe-area-inset-bottom));pointer-events:none}
+		</style>
 	</head>
 	<body>
+		<div id="rotate" role="dialog" aria-label="Bitte Gerät drehen">
+			<div class="rotate-card">
+				<svg class="rotate-icon" viewBox="0 0 64 64" aria-hidden="true">
+					<rect x="18" y="8" width="28" height="48" rx="4" fill="none" stroke="#f0d090" stroke-width="3"/>
+					<path d="M40 44h10v10" fill="none" stroke="#c4a574" stroke-width="3"/>
+					<path d="M50 54A22 22 0 1 1 44 14" fill="none" stroke="#c4a574" stroke-width="3"/>
+				</svg>
+				<p>Bitte Gerät drehen</p>
+			</div>
+		</div>
+		<p id="home-tip" hidden>Tipp: Teilen → Zum Home-Bildschirm für Vollbild</p>
+		<div id="skyseed-safe"></div>
+		<script>
+(function () {
+	function orient() {
+		var vv = window.visualViewport;
+		var w = vv ? vv.width : window.innerWidth;
+		var h = vv ? vv.height : window.innerHeight;
+		document.documentElement.classList.toggle('portrait', h > w);
+	}
+	orient();
+	window.addEventListener('resize', orient);
+	window.addEventListener('orientationchange', orient);
+	if (window.visualViewport) {
+		visualViewport.addEventListener('resize', orient);
+		visualViewport.addEventListener('scroll', orient);
+	}
+	var tip = document.getElementById('home-tip');
+	function iosSafari() {
+		var ua = navigator.userAgent || '';
+		var ios = /iPhone|iPad|iPod/.test(ua);
+		var safari = /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua);
+		return ios && safari;
+	}
+	function standalone() {
+		return window.navigator.standalone === true
+			|| window.matchMedia('(display-mode: standalone)').matches
+			|| window.matchMedia('(display-mode: fullscreen)').matches;
+	}
+	function syncTip() {
+		if (!tip) return;
+		var onTitle = window.__skyseed && window.__skyseed.title === true;
+		var show = onTitle && iosSafari() && !standalone() && localStorage.getItem('skyseed-home-tip') !== '1';
+		tip.hidden = !show;
+	}
+	if (tip) {
+		tip.addEventListener('click', function () {
+			localStorage.setItem('skyseed-home-tip', '1');
+			tip.hidden = true;
+		});
+	}
+	setInterval(syncTip, 400);
+})();
+		</script>
 		<canvas id="canvas">
 			Your browser does not support the canvas tag.
 		</canvas>
@@ -109,6 +186,7 @@ body {
 			<div id="status-notice"></div>
 		</div>
 
+		<script src="index.js"></script>
 		<script>
 (function () {
 	var orig = window.fetch.bind(window);
@@ -153,9 +231,8 @@ body {
 	};
 })();
 </script>
-		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":7137064,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":7146620,"index.wasm":39514753},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 
@@ -255,6 +332,7 @@ const engine = new Engine(GODOT_CONFIG);
 			},
 		}).then(() => {
 			setStatusMode('hidden');
+			window.__skyseed = Object.assign(window.__skyseed || {}, {started:true, heap:(performance.memory && performance.memory.usedJSHeapSize) || 0});
 		}, displayFailureNotice);
 	}
 }());
